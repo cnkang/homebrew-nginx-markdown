@@ -4,7 +4,8 @@ class NginxMarkdownModule < Formula
   url "https://github.com/cnkang/nginx-markdown-for-agents/archive/refs/tags/v0.6.0.tar.gz"
   # Regenerate from the GitHub tag archive after publishing the release tag:
   #   curl -sL https://github.com/cnkang/nginx-markdown-for-agents/archive/refs/tags/v0.6.0.tar.gz | sha256sum
-  sha256 "fa91d14de3d46b0da69ea1a133bee64dc734115881fa4207e05610e54a3217b1"
+  sha256 "a56e5a550bb060731bb6192679f70b23ac6b66eb74c0043b62153646f931ea34"
+  version "0.6.0"
   license "BSD-2-Clause"
 
   depends_on "cbindgen" => :build
