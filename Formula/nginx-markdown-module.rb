@@ -11,6 +11,7 @@ class NginxMarkdownModule < Formula
   sha256 "eede79cbfe08b43491d622476d5583e6efdf596a238fcbddcd9af6266d68514a"
   license "BSD-2-Clause"
 
+  depends_on "cbindgen" => :build
   depends_on "rust" => :build
   depends_on "openssl@3"
   depends_on "pcre2"
