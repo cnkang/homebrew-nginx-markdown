@@ -8,7 +8,7 @@ class NginxMarkdownModule < Formula
   #   curl -sL https://github.com/cnkang/nginx-markdown-for-agents/archive/refs/tags/v0.6.0.tar.gz | sha256sum
   # GitHub archives include a commit-date prefix that differs from local
   # git-archive output, so the SHA WILL change after tagging.
-  sha256 "eede79cbfe08b43491d622476d5583e6efdf596a238fcbddcd9af6266d68514a"
+  sha256 "5b08c997758bb26b7f8e49462a131be9121941f47dca7a64874cb9e2b8296f25"
   license "BSD-2-Clause"
 
   depends_on "cbindgen" => :build
