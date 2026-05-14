@@ -1,10 +1,10 @@
 class NginxMarkdownModule < Formula
   desc "NGINX module for HTML-to-Markdown conversion"
   homepage "https://github.com/cnkang/nginx-markdown-for-agents"
-  url "https://github.com/cnkang/nginx-markdown-for-agents/archive/refs/tags/v0.6.2.tar.gz"
+  url "https://github.com/cnkang/nginx-markdown-for-agents/archive/refs/tags/v0.6.3.tar.gz"
   # Regenerate from the GitHub tag archive after publishing the release tag:
   #   curl -sL https://github.com/cnkang/nginx-markdown-for-agents/archive/refs/tags/v0.6.1.tar.gz | sha256sum
-  sha256 "534ef43c09b826bacdb44777ee33b90c29ac7cb7f33792e1fdca7755b89d1afc"
+  sha256 "3a341d139663ab8f2d07fcab978458c0c99277a82c6db591dac5cf60d575b06a"
   license "BSD-2-Clause"
 
   depends_on "cbindgen" => :build
