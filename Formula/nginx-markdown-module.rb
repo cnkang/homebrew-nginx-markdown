@@ -1,11 +1,21 @@
 class NginxMarkdownModule < Formula
   desc "NGINX module for HTML-to-Markdown conversion"
   homepage "https://github.com/cnkang/nginx-markdown-for-agents"
-  # Source formula for the Homebrew tap publish workflow.
-  # The workflow rewrites `url` and `sha256` to the target release tag
-  # before pushing to the tap repository.
-  url "https://github.com/cnkang/nginx-markdown-for-agents/archive/refs/tags/v0.8.3.tar.gz"
-  sha256 "dac472ba4016ab909cb08e3661fec1afb0358bf7fc02582aed2e1d369d82aedf"
+  # Checked-in Homebrew formula source.
+  #
+  # This file is the current-release fallback/template for the Homebrew tap
+  # publish workflow. The authoritative installable formula lives in the tap
+  # repository after a release: `homebrew-tap-publish.yml` rewrites both `url`
+  # and `sha256` to the target release tag archive and pushes the result to the
+  # tap, where it becomes the authoritative state users install from.
+  # Do not update this file manually for unreleased development branches.
+  #
+  # The values below are kept pinned to the latest 0.8.x tag (a real, verified
+  # url/sha256 pair) so the gate and post-release verify workflows operate on a
+  # self-consistent source. They are NOT meant for direct `brew install` from
+  # this checked-in path; install from the tap repository instead.
+  url "https://github.com/cnkang/nginx-markdown-for-agents/archive/refs/tags/v0.9.0.tar.gz"
+  sha256 "c90b31106282b8e7f94ab5d9cfd2d1e20b7de4799909c7a0bdf8371f2bf0e48b"
   license "BSD-2-Clause"
 
   depends_on "cbindgen" => :build
