@@ -14,39 +14,92 @@ class NginxMarkdownModule < Formula
   # url/sha256 pair) so the gate and post-release verify workflows operate on a
   # self-consistent source. They are NOT meant for direct `brew install` from
   # this checked-in path; install from the tap repository instead.
-  url "https://github.com/cnkang/nginx-markdown-for-agents/archive/refs/tags/v0.9.0.tar.gz"
-  sha256 "c90b31106282b8e7f94ab5d9cfd2d1e20b7de4799909c7a0bdf8371f2bf0e48b"
+  url "https://github.com/cnkang/nginx-markdown-for-agents/archive/3c417a88ee4de438809ff35d6dcebd71b9472b91.tar.gz"
+  version "0.9.2"
+  sha256 "e931e3c68641c76487da13d3eff78559b54b845871c2a886dd272b87e69a5e8a"
   license "BSD-2-Clause"
 
+  # Dynamic modules are ABI-bound to the exact Homebrew nginx dependency.
+  # Increment the formula revision whenever nginx is upgraded so Homebrew
+  # rebuilds this module against the new nginx binary.
+  revision 1
+
   depends_on "cbindgen" => :build
-  depends_on "nginx" => :build
   depends_on "pkgconf" => :build
-  depends_on "rust" => :build
-  depends_on "openssl@3"
+  depends_on "brotli"
+  depends_on "nginx"
   depends_on "pcre2"
 
+  # The Rust toolchain is installed with the repository's checksum-verifying
+  # rustup helper rather than the Homebrew `rust` formula, because the crate
+  # MSRV can briefly exceed Homebrew's Rust version. The helper pins the
+  # architecture-specific rustup-init bytes before execution.
+  TOOLCHAIN_VERSION = "1.98.1".freeze
+
   def install
+    rustup_home = "#{buildpath}/rustup"
+    cargo_home = "#{buildpath}/cargo"
+    ENV["RUSTUP_HOME"] = rustup_home
+    ENV["CARGO_HOME"] = cargo_home
+    rustup_arch = Hardware::CPU.arm? ? "arm64" : "amd64"
+    system "bash",
+           (buildpath/"packaging/scripts/install-verified-rustup.sh").to_s,
+           "--arch", rustup_arch,
+           "--os", "darwin",
+           "--toolchain", TOOLCHAIN_VERSION,
+           "--checksums", (buildpath/"packaging/checksums.sha256").to_s
+    ENV.prepend_path "PATH", "#{cargo_home}/bin"
+
+    # Enable Brotli streaming decompression explicitly so the official Homebrew
+    # artifact does not rely on auto-detection alone.
+    ENV["NGX_MARKDOWN_BROTLI_STREAMING"] = "on"
+
     system "make", "build"
 
     nginx_version = Formula["nginx"].version.to_s
     odie "Unable to detect Homebrew nginx version" if nginx_version.blank?
+    openssl_formula = nginx_openssl_formula
 
     nginx_archive = "nginx-#{nginx_version}.tar.gz"
-    system "curl", "-fsSL", "https://nginx.org/download/#{nginx_archive}",
+    system "curl", "--proto", "=https", "--tlsv1.2", "-fsSL",
+           "https://nginx.org/download/#{nginx_archive}",
            "-o", nginx_archive
+    system "bash",
+           (buildpath/"packaging/scripts/verify-checksum.sh").to_s,
+           "-f", nginx_archive,
+           "-i", "nginx-#{nginx_version}",
+           "-c", (buildpath/"packaging/checksums.sha256").to_s
     system "tar", "-xzf", nginx_archive
 
     cd "nginx-#{nginx_version}" do
       args = [
         "--with-compat",
         "--add-dynamic-module=#{buildpath}/components/nginx-module",
-        "--with-cc-opt=-I#{formula_opt_include("openssl@3")} -I#{formula_opt_include("pcre2")}",
-        "--with-ld-opt=-L#{formula_opt_lib("openssl@3")} -L#{formula_opt_lib("pcre2")}",
+        "--with-cc-opt=-I#{formula_opt_include(openssl_formula)} " \
+        "-I#{formula_opt_include("pcre2")} -I#{formula_opt_include("brotli")}",
+        "--with-ld-opt=-L#{formula_opt_lib(openssl_formula)} " \
+        "-L#{formula_opt_lib("pcre2")} -L#{formula_opt_lib("brotli")}",
       ]
       system "./configure", *args
       system "make", "modules"
       (lib/"nginx/modules").install "objs/ngx_http_markdown_filter_module.so"
     end
+  end
+
+  def nginx_openssl_formula
+    # A dependency can be declared tap-qualified (for example
+    # "homebrew/core/openssl@3"), and Dependency#name keeps that full form,
+    # so the match reads the bare formula name through Homebrew's own
+    # helper (the audit requires it over manual name splitting).  The
+    # return value keeps the declared spelling: the opt-prefix helpers
+    # strip the tap component themselves.
+    dependencies = Formula["nginx"].deps.select do |dependency|
+      Utils.name_from_full_name(dependency.name).match?(/\Aopenssl(?:@\d+)?\z/)
+    end
+    odie "Unable to detect Homebrew nginx OpenSSL dependency" \
+      unless dependencies.one?
+
+    dependencies.first.name
   end
 
   def caveats
@@ -58,6 +111,22 @@ class NginxMarkdownModule < Formula
   end
 
   test do
-    assert_path_exists lib/"nginx/modules/ngx_http_markdown_filter_module.so"
+    module_path = lib/"nginx/modules/ngx_http_markdown_filter_module.so"
+    assert_path_exists module_path
+    assert_match "libbrotlidec", shell_output("otool -L #{module_path}")
+    nginx_version = Formula["nginx"].version.to_s
+    assert_match(/\A\d+\.\d+\.\d+\z/, nginx_version)
+    assert_match(%r{nginx/#{Regexp.escape(nginx_version)}\s*\z},
+                 shell_output("#{formula_opt_bin("nginx")}/nginx -v 2>&1"))
+
+    (testpath/"nginx.conf").write <<~EOS
+      load_module #{module_path};
+      pid #{testpath}/nginx.pid;
+      error_log #{testpath}/error.log;
+      events {}
+      http {}
+    EOS
+    system formula_opt_bin("nginx")/"nginx", "-t", "-p", testpath,
+           "-c", testpath/"nginx.conf"
   end
 end
