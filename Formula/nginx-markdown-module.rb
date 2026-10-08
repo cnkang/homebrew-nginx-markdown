@@ -14,9 +14,9 @@ class NginxMarkdownModule < Formula
   # url/sha256 pair) so the gate and post-release verify workflows operate on a
   # self-consistent source. They are NOT meant for direct `brew install` from
   # this checked-in path; install from the tap repository instead.
-  url "https://github.com/cnkang/nginx-markdown-for-agents/archive/3c417a88ee4de438809ff35d6dcebd71b9472b91.tar.gz"
+  url "https://github.com/cnkang/nginx-markdown-for-agents/archive/9b8596c6242ca76f51d5f57451eb99519a27735f.tar.gz"
   version "0.9.2"
-  sha256 "e931e3c68641c76487da13d3eff78559b54b845871c2a886dd272b87e69a5e8a"
+  sha256 "e94a011d1c197f64f5820fb466feb502fa6b286f58fee34e082446a1779a484c"
   license "BSD-2-Clause"
 
   # Dynamic modules are ABI-bound to the exact Homebrew nginx dependency.
